@@ -100,6 +100,4 @@ const outerApp = () => {
     .then(() => app(i18nextInstance));
 };
 
-outerApp();
-
 export default outerApp();

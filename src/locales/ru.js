@@ -1,9 +1,16 @@
 export default {
   translation: {
-    label: 'Ссылка RSS',
-    button: 'Отправить',
-    urlError: 'Ошибка. Некорректный URL',
-    requiredError: 'Введите URL',
-    notOneOfError: 'Этот URL уже есть в базе данных',
+    feedsTitle: 'Фиды',
+    postsTitle: 'Посты',
+    btnSm: 'Просмотр',
+    successLoad: 'RSS успешно загружен',
+    errors: {
+      urlError: 'Ссылка должна быть валидным URL',
+      rssError: 'Ресурс не содержит валидный RSS',
+      requiredError: 'Не должно быть пустым',
+      notOneOfError: 'RSS уже существует',
+      connectionError: 'Ошибка сети',
+      unknownError: 'Неизвестная ошибка',
+    },
   },
 };
