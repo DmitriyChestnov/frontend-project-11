@@ -6,4 +6,12 @@ overrides: []
 parserOptions:
   ecmaVersion: latest
   sourceType: module
-rules: {}
+rules:
+  no-console: 0
+  import/extensions: 0
+  no-param-reassign: 0
+  no-underscore-dangle: [2, { "allow": ["__filename", "__dirname"] }]
+ignorePatterns:
+  - "node_modules/*"
+  - "dist/*"
+  - "webpack.config.js"

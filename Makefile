@@ -2,10 +2,10 @@ develop:
 	npx webpack serve
 
 install:
-	npm ci
+	npm install
 
 build:
-	NODE_ENV=production npx webpack
+	npm run build
 
 lint:
 	npx eslint .
