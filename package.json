@@ -36,11 +36,10 @@
     "workbox-webpack-plugin": "^7.0.0"
   },
   "dependencies": {
-    "@babel/runtime": "^7.22.15",
     "axios": "^1.5.0",
     "bootstrap": "^5.3.1",
     "i18next": "^23.5.1",
-    "mini-css-extract-plugin": "^2.7.6",
+    "lodash": "^4.17.21",
     "on-change": "^4.0.2",
     "uuid": "^9.0.1",
     "yup": "^1.2.0"
