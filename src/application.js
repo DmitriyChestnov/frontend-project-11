@@ -7,6 +7,13 @@ import ru from './locales/ru.js';
 import render from './view.js';
 import parser from './parser.js';
 
+const validate = (url, listUrls) => {
+  const schema = yup.object().shape({
+    url: yup.string().url().nullable().notOneOf(listUrls),
+  });
+  return schema.validate(url);
+};
+
 const updateTracker = (state, url, i18Inst, feedId) => {
   const modifiedUrl = `${i18Inst.t('proxy')}${encodeURIComponent(url)}`;
   const iter = () => {
@@ -41,6 +48,7 @@ export default () => {
     trackingPosts: [],
     validity: '',
   };
+
   const rssForm = document.querySelector('form.rss-form');
   const watchedState = onChange(state, render(state, rssForm, i18nInstance));
   rssForm.addEventListener('submit', (e) => {
@@ -59,10 +67,7 @@ export default () => {
       },
     });
 
-    const schema = yup.object().shape({
-      url: yup.string().url().nullable().notOneOf(state.addedUrls),
-    });
-    schema.validate(state.fields)
+    validate(watchedState.fields, watchedState.addedUrls)
       .then(() => {
         const modifiedUrl = `${i18nInstance.t('proxy')}${encodeURIComponent(url)}`;
         return axios.get(modifiedUrl);
@@ -78,7 +83,7 @@ export default () => {
       .catch((err) => {
         watchedState.validity = 'invalid';
         state.validity = '';
-        watchedState.error = err;
+        watchedState.error = err.errors.toString();
       });
   });
 };
