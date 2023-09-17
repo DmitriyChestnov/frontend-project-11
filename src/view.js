@@ -84,13 +84,13 @@ export default (state, form, i18n) => (path, value, prevValue) => {
   if (path === 'error') {
     form.elements.url.classList.add('is-invalid');
     const feedbackContainer = createFeedbackContainer();
-    if (value.name === i18n.t('errorNames.validation')) {
+    if (value.name === 'ValidationError') {
       if (value.errors.toString() === i18n.t('errors.invalidUrl')) {
         feedbackContainer.textContent = i18n.t('errors.invalidUrl');
       } else if (value.errors.toString() === i18n.t('errors.addedRss')) {
         feedbackContainer.textContent = i18n.t('errors.addedRss');
       }
-    } else if (value.name === i18n.t('errorNames.axios')) {
+    } else if (value.name === 'AxiosError') {
       feedbackContainer.textContent = i18n.t('errors.network');
     }
   }
