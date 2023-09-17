@@ -2,10 +2,23 @@ import onChange from 'on-change';
 import * as yup from 'yup';
 import i18n from 'i18next';
 import axios from 'axios';
+
 import ru from './locales/ru.js';
 import render from './view.js';
 import parser from './parser.js';
-import tracker from './tracking.js';
+
+const updateTracker = (state, url, i18Inst, feedId) => {
+  const modifiedUrl = `${i18Inst.t('proxy')}${encodeURIComponent(url)}`;
+  const iter = () => {
+    axios.get(modifiedUrl)
+      .then((response) => {
+        parser(state, response.data, 'existing', feedId);
+      })
+      .catch((err) => console.log(err))
+      .then(() => setTimeout(() => iter(), 5000));
+  };
+  iter();
+};
 
 export default () => {
   const i18nInstance = i18n.createInstance();
@@ -50,7 +63,7 @@ export default () => {
         watchedState.newFeedId = id;
         state.validity = '';
         state.addedUrls.push(url);
-        tracker(watchedState, url, i18nInstance, id);
+        updateTracker(watchedState, url, i18nInstance, id);
       })
       .catch((err) => {
         watchedState.validity = 'invalid';

@@ -1,4 +1,6 @@
-const renderCommonParts = (type, i18n) => {
+import onChange from 'on-change';
+
+const createList = (type, i18n) => {
   const container = document.querySelector(`.${type}`);
   container.innerHTML = '';
   const div = document.createElement('div');
@@ -14,7 +16,30 @@ const renderCommonParts = (type, i18n) => {
   return list;
 };
 
-const renderPosts = (posts, list, direction) => {
+const createFeedbackContainer = () => {
+  const feedbackContainer = document.querySelector('.feedback');
+  feedbackContainer.classList.remove('text-success');
+  feedbackContainer.classList.add('text-danger');
+  return feedbackContainer;
+};
+
+const renderLinks = (post) => (path, value) => {
+  if (path === 'viewedPost') {
+    const link = document.querySelector(`a[data-id="${value}"]`);
+    link.classList.remove('fw-bold');
+    link.classList.add('fw-normal');
+    link.classList.add('link-secondary');
+
+    const modalTitle = document.querySelector('.modal-title');
+    modalTitle.textContent = post.title;
+    const modalBody = document.querySelector('.modal-body');
+    modalBody.textContent = post.description;
+    const modalLink = document.querySelector('.modal-footer a');
+    modalLink.setAttribute('href', post.link);
+  }
+};
+
+const renderPosts = (posts, list, direction, i18n, state) => {
   posts.forEach((post) => {
     const listEl = document.createElement('li');
     listEl.classList.add('list-group-item', 'd-flex', 'justify-content-between');
@@ -33,22 +58,49 @@ const renderPosts = (posts, list, direction) => {
     link.setAttribute('rel', 'noopener noreferrer');
     link.textContent = post.title;
     listEl.append(link);
+
+    const watchedState = onChange(state, renderLinks(post));
+
+    link.addEventListener('click', () => {
+      watchedState.viewedPost = post.id;
+    });
+
+    const button = document.createElement('button');
+    button.setAttribute('type', 'button');
+    button.classList.add('btn', 'btn-outline-primary', 'btn-sm');
+    button.dataset.id = post.id;
+    button.dataset.bsToggle = 'modal';
+    button.dataset.bsTarget = '#modal';
+    button.textContent = i18n.t('button');
+    listEl.append(button);
+
+    button.addEventListener('click', () => {
+      watchedState.viewedPost = post.id;
+    });
   });
 };
 
 export default (state, form, i18n) => (path, value, prevValue) => {
-  if (path === 'validity') {
-    const input = form.elements.url;
-    if (value === 'invalid') {
-      input.classList.add('is-invalid');
-    } else if (value === 'valid') {
-      input.classList.remove('is-invalid');
-      form.reset();
-      input.focus();
+  if (path === 'error') {
+    form.elements.url.classList.add('is-invalid');
+    const feedbackContainer = createFeedbackContainer();
+    if (value.name === i18n.t('errorNames.validation')) {
+      if (value.errors.toString() === i18n.t('errors.invalidUrl')) {
+        feedbackContainer.textContent = i18n.t('errors.invalidUrl');
+      } else if (value.errors.toString() === i18n.t('errors.addedRss')) {
+        feedbackContainer.textContent = i18n.t('errors.addedRss');
+      }
+    } else if (value.name === i18n.t('errorNames.axios')) {
+      feedbackContainer.textContent = i18n.t('errors.network');
     }
   }
+  if (path === 'parsingErrors') {
+    form.elements.url.classList.add('is-invalid');
+    const feedbackContainer = createFeedbackContainer();
+    feedbackContainer.textContent = i18n.t('errors.invalidRss');
+  }
   if (path === 'feeds') {
-    const list = renderCommonParts('feeds', i18n);
+    const list = createList('feeds', i18n);
     state.feeds.forEach((feed) => {
       const listEl = document.createElement('li');
       listEl.classList.add('list-group-item', 'border-0', 'border-end-0');
@@ -64,21 +116,30 @@ export default (state, form, i18n) => (path, value, prevValue) => {
       description.textContent = feed.description;
       listEl.append(description);
     });
+    const input = form.elements.url;
+    input.classList.remove('is-invalid');
+    form.reset();
+    input.focus();
+
+    const feedbackContainer = document.querySelector('.feedback');
+    feedbackContainer.classList.remove('text-danger');
+    feedbackContainer.classList.add('text-success');
+    feedbackContainer.textContent = i18n.t('success');
   }
   if (path === 'newFeedId' && !prevValue) {
-    const list = renderCommonParts('posts', i18n);
+    const list = createList('posts', i18n);
     const { posts } = state;
-    renderPosts(posts, list, 'append');
+    renderPosts(posts, list, 'append', i18n, state);
   }
   if (path === 'newFeedId' && prevValue) {
     const list = document.querySelector('.posts ul');
     const posts = state.posts.filter(({ feedId }) => value === feedId).reverse();
-    renderPosts(posts, list, 'prepend');
+    renderPosts(posts, list, 'prepend', i18n, state);
   }
   if (path === 'trackingPosts') {
     const list = document.querySelector('.posts ul');
     const existingPosts = state.posts.map(({ id }) => id);
     const posts = state.trackingPosts.filter(({ id }) => !existingPosts.includes(id)).reverse();
-    renderPosts(posts, list, 'prepend');
+    renderPosts(posts, list, 'prepend', i18n, state);
   }
 };
