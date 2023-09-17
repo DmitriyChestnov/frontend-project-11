@@ -2,20 +2,29 @@ import onChange from 'on-change';
 import * as yup from 'yup';
 import i18n from 'i18next';
 import axios from 'axios';
+import uniqueId from 'lodash/uniqueId';
 
 import ru from './locales/ru.js';
 import render from './view.js';
 import parser from './parser.js';
 
-const validate = (url, listUrls) => {
-  const schema = yup.object().shape({
-    url: yup.string().url().nullable().notOneOf(listUrls),
-  });
+const validateUrl = (url, listUrls) => {
+  const schema = yup.string()
+    .required()
+    .url()
+    .notOneOf(listUrls);
   return schema.validate(url);
 };
 
-const updateTracker = (state, url, i18Inst, feedId) => {
-  const modifiedUrl = `${i18Inst.t('proxy')}${encodeURIComponent(url)}`;
+const addProxy = (url) => {
+  const urlProxy = new URL('/get', 'https://allorigins.hexlet.app');
+  urlProxy.searchParams.set('url', url);
+  urlProxy.searchParams.set('disableCache', 'true');
+  return urlProxy.toString();
+};
+
+const updateTracker = (state, url, feedId) => {
+  const modifiedUrl = addProxy(url);
   const iter = () => {
     axios.get(modifiedUrl)
       .then((response) => {
@@ -37,25 +46,24 @@ export default () => {
   });
 
   const state = {
-    fields: {
-      url: '',
-    },
+    url: '',
     feeds: [],
     posts: [],
     newFeedId: '',
     error: '',
+    parsingErrors: [],
     addedUrls: [],
     trackingPosts: [],
-    validity: '',
+    viewedPost: '',
   };
 
-  const rssForm = document.querySelector('form.rss-form');
-  const watchedState = onChange(state, render(state, rssForm, i18nInstance));
-  rssForm.addEventListener('submit', (e) => {
+  const form = document.querySelector('form.rss-form');
+  const watchedState = onChange(state, render(state, form, i18nInstance));
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const url = formData.get('url');
-    state.fields.url = url;
+    state.url = url;
 
     yup.setLocale({
       mixed: {
@@ -67,23 +75,23 @@ export default () => {
       },
     });
 
-    validate(watchedState.fields, watchedState.addedUrls)
+    validateUrl(state.url, state.addedUrls)
       .then(() => {
-        const modifiedUrl = `${i18nInstance.t('proxy')}${encodeURIComponent(url)}`;
-        return axios.get(modifiedUrl);
+        const newUrl = addProxy(url);
+        return axios.get(newUrl);
       })
-      .then((response) => parser(watchedState, response.data, 'new'))
+      .then((response) => {
+        const id = uniqueId();
+        parser(watchedState, response.data, 'new', id);
+        return id;
+      })
       .then((id) => {
-        watchedState.validity = 'valid';
         watchedState.newFeedId = id;
-        state.validity = '';
         state.addedUrls.push(url);
-        updateTracker(watchedState, url, i18nInstance, id);
+        updateTracker(watchedState, url, id);
       })
       .catch((err) => {
-        watchedState.validity = 'invalid';
-        state.validity = '';
-        watchedState.error = err.errors.toString();
+        watchedState.error = err;
       });
   });
 };
