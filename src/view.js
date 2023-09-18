@@ -81,6 +81,7 @@ const renderPosts = (posts, list, direction, i18n, state) => {
 };
 
 export default (state, form, i18n) => (path, value, prevValue) => {
+  console.log(value);
   if (path === 'error') {
     form.elements.url.classList.add('is-invalid');
     const feedbackContainer = createFeedbackContainer();

@@ -67,7 +67,7 @@ export default () => {
 
     yup.setLocale({
       mixed: {
-        notOneOf: 'ValidationError',
+        notOneOf: i18nInstance.t('errors.addedRss'),
         default: 'field_invalid',
       },
       string: {
