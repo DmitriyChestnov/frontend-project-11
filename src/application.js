@@ -30,7 +30,6 @@ const updateTracker = (state, url, feedId) => {
       .then((response) => {
         parser(state, response.data, 'existing', feedId);
       })
-      // eslint-disable-next-line no-console
       .catch((err) => console.log(err))
       .then(() => setTimeout(() => iter(), 5000));
   };
@@ -68,7 +67,7 @@ export default () => {
 
     yup.setLocale({
       mixed: {
-        notOneOf: i18nInstance.t('errors.addedRss'),
+        notOneOf: 'ValidationError',
         default: 'field_invalid',
       },
       string: {

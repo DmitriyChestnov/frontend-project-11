@@ -5,7 +5,6 @@ export default (state, data, type, curFeedId) => {
     const parser = new DOMParser();
     const document = parser.parseFromString(data.contents, 'text/xml');
     const items = document.querySelectorAll('item');
-
     if (type === 'new') {
       const chaTitle = document.querySelector('channel > title').textContent;
       const chaDescription = document.querySelector('channel > description').textContent;
