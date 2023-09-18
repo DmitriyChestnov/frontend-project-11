@@ -1,4 +1,5 @@
 import onChange from 'on-change';
+import render from './renderLinks.js';
 
 const createList = (type, i18n) => {
   const container = document.querySelector(`.${type}`);
@@ -23,22 +24,6 @@ const createFeedbackContainer = () => {
   return feedbackContainer;
 };
 
-const renderLinks = (post) => (path, value) => {
-  if (path === 'viewedPost') {
-    const link = document.querySelector(`a[data-id="${value}"]`);
-    link.classList.remove('fw-bold');
-    link.classList.add('fw-normal');
-    link.classList.add('link-secondary');
-
-    const modalTitle = document.querySelector('.modal-title');
-    modalTitle.textContent = post.title;
-    const modalBody = document.querySelector('.modal-body');
-    modalBody.textContent = post.description;
-    const modalLink = document.querySelector('.modal-footer a');
-    modalLink.setAttribute('href', post.link);
-  }
-};
-
 const renderPosts = (posts, list, direction, i18n, state) => {
   posts.forEach((post) => {
     const listEl = document.createElement('li');
@@ -59,7 +44,7 @@ const renderPosts = (posts, list, direction, i18n, state) => {
     link.textContent = post.title;
     listEl.append(link);
 
-    const watchedState = onChange(state, renderLinks(post));
+    const watchedState = onChange(state, render(post));
 
     link.addEventListener('click', () => {
       watchedState.viewedPost = post.id;
@@ -84,13 +69,13 @@ export default (state, form, i18n) => (path, value, prevValue) => {
   if (path === 'error') {
     form.elements.url.classList.add('is-invalid');
     const feedbackContainer = createFeedbackContainer();
-    if (value.name === 'ValidationError') {
+    if (value.name === i18n.t('errorNames.validation')) {
       if (value.errors.toString() === i18n.t('errors.invalidUrl')) {
         feedbackContainer.textContent = i18n.t('errors.invalidUrl');
       } else if (value.errors.toString() === i18n.t('errors.addedRss')) {
         feedbackContainer.textContent = i18n.t('errors.addedRss');
       }
-    } else if (value.name === 'AxiosError') {
+    } else if (value.name === i18n.t('errorNames.axios')) {
       feedbackContainer.textContent = i18n.t('errors.network');
     }
   }
