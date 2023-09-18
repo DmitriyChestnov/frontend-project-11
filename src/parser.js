@@ -1,7 +1,7 @@
 import uniqueId from 'lodash/uniqueId';
 
 export default (state, data, type, curFeedId) => {
-  try { // Парсим DOM-дерево
+  try {
     const parser = new DOMParser();
     const document = parser.parseFromString(data.contents, 'text/xml');
     const items = document.querySelectorAll('item');
