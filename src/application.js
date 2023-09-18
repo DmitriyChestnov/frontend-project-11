@@ -3,19 +3,37 @@ import * as yup from 'yup';
 import i18n from 'i18next';
 import axios from 'axios';
 import uniqueId from 'lodash/uniqueId';
+
 import ru from './locales/ru.js';
 import render from './view.js';
 import parser from './parser.js';
 
-const trackingUpdate = (state, url, feedId) => {
-  const modifiedUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
+const validateUrl = (url, listUrls) => {
+  const schema = yup.string()
+    .required()
+    .url()
+    .notOneOf(listUrls);
+  return schema.validate(url);
+};
+
+const addProxy = (url) => {
+  const urlProxy = new URL('/get', 'https://allorigins.hexlet.app');
+  urlProxy.searchParams.set('url', url);
+  urlProxy.searchParams.set('disableCache', 'true');
+  return urlProxy.toString();
+};
+
+const updateTracker = (state, url, feedId) => {
+  const modifiedUrl = addProxy(url);
   const iter = () => {
     axios.get(modifiedUrl)
-      .then((response) => parser(state, response.data, 'existing', feedId))
-      .catch((err) => console.error(err))
+      .then((response) => {
+        parser(state, response.data, 'existing', feedId);
+      })
+      .catch((err) => console.log(err))
       .then(() => setTimeout(() => iter(), 5000));
   };
-  setTimeout(() => iter(), 5000);
+  iter();
 };
 
 export default () => {
@@ -27,10 +45,20 @@ export default () => {
     },
   });
 
+  const elements = {
+    form: document.querySelector('form'),
+    submit: document.querySelector('button[type="submit"]'),
+    feedback: document.querySelector('.feedback'),
+    inputField: document.getElementById('url-input'),
+    feedsContainer: document.querySelector('.feeds'),
+    postsContainer: document.querySelector('.posts'),
+    modalTitle: document.querySelector('.modal-title'),
+    modalBody: document.querySelector('.modal-body'),
+    openFull: document.querySelector('.full-article'),
+  };
+
   const state = {
-    fields: {
-      url: '',
-    },
+    url: '',
     feeds: [],
     posts: [],
     newFeedId: '',
@@ -40,13 +68,15 @@ export default () => {
     trackingPosts: [],
     viewedPost: '',
   };
-  const form = document.querySelector('form.rss-form');
-  const watchedState = onChange(state, render(state, form, i18nInstance));
-  form.addEventListener('submit', (e) => {
+  // извлекаем форму
+  // const form = document.querySelector('form.rss-form');
+  // Вешаем контроллер
+  const watchedState = onChange(state, render(state, elements, i18nInstance));
+  elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const url = formData.get('url');
-    state.fields.url = url;
+    state.url = url;
 
     yup.setLocale({
       mixed: {
@@ -57,13 +87,13 @@ export default () => {
         url: i18nInstance.t('errors.invalidUrl'),
       },
     });
-    const schema = yup.object().shape({
-      url: yup.string().url().nullable().notOneOf(state.addedUrls),
-    });
-    schema.validate(state.fields)
+
+    validateUrl(state.url, state.addedUrls)
       .then(() => {
-        const modifiedUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
-        return axios.get(modifiedUrl);
+        elements.submit.disabled = true;
+        elements.inputField.setAttribute('readonly', true);
+        const newUrl = addProxy(url);
+        return axios.get(newUrl);
       })
       .then((response) => {
         const id = uniqueId();
@@ -73,7 +103,7 @@ export default () => {
       .then((id) => {
         watchedState.newFeedId = id;
         state.addedUrls.push(url);
-        trackingUpdate(watchedState, url, id);
+        updateTracker(watchedState, url, id);
       })
       .catch((err) => {
         watchedState.error = err;

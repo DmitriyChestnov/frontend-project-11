@@ -1,5 +1,20 @@
 import onChange from 'on-change';
-import render from './renderLinks.js';
+
+const renderLinks = (post) => (path, value) => {
+  if (path === 'viewedPost') {
+    const link = document.querySelector(`a[data-id="${value}"]`);
+    link.classList.remove('fw-bold');
+    link.classList.add('fw-normal');
+    link.classList.add('link-secondary');
+
+    const modalTitle = document.querySelector('.modal-title');
+    modalTitle.textContent = post.title;
+    const modalBody = document.querySelector('.modal-body');
+    modalBody.textContent = post.description;
+    const modalLink = document.querySelector('.modal-footer a');
+    modalLink.setAttribute('href', post.link);
+  }
+};
 
 const createList = (type, i18n) => {
   const container = document.querySelector(`.${type}`);
@@ -44,7 +59,7 @@ const renderPosts = (posts, list, direction, i18n, state) => {
     link.textContent = post.title;
     listEl.append(link);
 
-    const watchedState = onChange(state, render(post));
+    const watchedState = onChange(state, renderLinks(post));
 
     link.addEventListener('click', () => {
       watchedState.viewedPost = post.id;
@@ -65,9 +80,10 @@ const renderPosts = (posts, list, direction, i18n, state) => {
   });
 };
 
-export default (state, form, i18n) => (path, value, prevValue) => {
+export default (state, elements, i18n) => (path, value, prevValue) => {
+  // Отрисовка ошибок
   if (path === 'error') {
-    form.elements.url.classList.add('is-invalid');
+    elements.form.elements.url.classList.add('is-invalid');
     const feedbackContainer = createFeedbackContainer();
     if (value.name === i18n.t('errorNames.validation')) {
       if (value.errors.toString() === i18n.t('errors.invalidUrl')) {
@@ -80,10 +96,10 @@ export default (state, form, i18n) => (path, value, prevValue) => {
     }
   }
   if (path === 'parsingErrors') {
-    form.elements.url.classList.add('is-invalid');
+    elements.form.elements.url.classList.add('is-invalid');
     const feedbackContainer = createFeedbackContainer();
     feedbackContainer.textContent = i18n.t('errors.invalidRss');
-  }
+  } // Отрисовка фидов
   if (path === 'feeds') {
     const list = createList('feeds', i18n);
     state.feeds.forEach((feed) => {
@@ -101,9 +117,11 @@ export default (state, form, i18n) => (path, value, prevValue) => {
       description.textContent = feed.description;
       listEl.append(description);
     });
-    const input = form.elements.url;
+    const input = elements.form.elements.url;
     input.classList.remove('is-invalid');
-    form.reset();
+    elements.submit.disabled = false;
+    elements.inputField.removeAttribute('readonly');
+    elements.form.reset();
     input.focus();
 
     const feedbackContainer = document.querySelector('.feedback');
