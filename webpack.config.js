@@ -12,18 +12,14 @@ const config = {
     open: true,
     host: 'localhost',
   },
-  // Указываем новые плагины для обработки файлов
   plugins: [
     new HtmlWebpackPlugin({
       template: 'index.html',
     }),
   ],
-  // Указываем тут, что будем использовать спец. модуль для определенных файлов (лоадер)
   module: {
-    // Указываем правила для данных модулей
     rules: [
       {
-        // Указываем правило для каждого лоадера
         test: /\.js$/,
         exclude: /node_modules/,
         use: {

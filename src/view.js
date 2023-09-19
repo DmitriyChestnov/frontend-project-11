@@ -9,14 +9,6 @@ const renderStatus = (processState, elements, i18n) => {
     case 'processing':
       elements.input.readOnly = true;
       elements.button.disabled = true;
-      elements.button.innerHTML = '';
-      elements.spanSpinner.classList.add('spinner-border', 'spinner-border-sm');
-      elements.spanSpinner.setAttribute('role', 'status');
-      elements.spanSpinner.setAttribute('aria-hidden', 'true');
-      elements.button.append(elements.spanSpinner);
-      elements.spanLoading.classList.add('sr-only');
-      elements.spanLoading.textContent = '  Загрузка...';
-      elements.button.append(elements.spanLoading);
       break;
     case 'success':
       elements.input.readOnly = false;
@@ -25,9 +17,9 @@ const renderStatus = (processState, elements, i18n) => {
       elements.button.textContent = 'Добавить';
       elements.form.reset();
       elements.form.focus();
-      elements.feedbackContainer.classList.remove('text-danger');
-      elements.feedbackContainer.classList.add('text-success');
-      elements.feedbackContainer.textContent = i18n.t('form.success');
+      elements.feedback.classList.remove('text-danger');
+      elements.feedback.classList.add('text-success');
+      elements.feedback.textContent = i18n.t('success');
       break;
     default:
       throw new Error(`Unknown process state: ${processState}`);
@@ -52,11 +44,11 @@ const renderVisitedLinks = (setID) => {
 };
 
 const renderFeeds = (state, elements, i18n) => {
-  elements.feedsContainer.innerHTML = '';
+  elements.feeds.innerHTML = '';
 
   const divEl = document.createElement('div');
   divEl.classList.add('card', 'border-0');
-  elements.feedsContainer.append(divEl);
+  elements.feeds.append(divEl);
 
   const divTitleEl = document.createElement('div');
   divTitleEl.classList.add('card-body');
@@ -64,7 +56,7 @@ const renderFeeds = (state, elements, i18n) => {
 
   const h2El = document.createElement('h2');
   h2El.classList.add('card-title', 'h4');
-  h2El.textContent = i18n.t('feeds.title');
+  h2El.textContent = i18n.t('feeds');
   divTitleEl.append(h2El);
 
   const ulEl = document.createElement('ul');
@@ -91,10 +83,10 @@ const renderFeeds = (state, elements, i18n) => {
 };
 
 const renderPosts = (state, elements, i18n) => {
-  elements.postsContainer.innerHTML = '';
+  elements.posts.innerHTML = '';
   const divEl = document.createElement('div');
   divEl.classList.add('card', 'border-0');
-  elements.postsContainer.prepend(divEl);
+  elements.posts.prepend(divEl);
 
   const divTitleEl = document.createElement('div');
   divTitleEl.classList.add('card-body');
@@ -102,7 +94,7 @@ const renderPosts = (state, elements, i18n) => {
 
   const h2El = document.createElement('h2');
   h2El.classList.add('card-title', 'h4');
-  h2El.textContent = i18n.t('posts.title');
+  h2El.textContent = i18n.t('posts');
   divTitleEl.prepend(h2El);
 
   const ulEl = document.createElement('ul');
@@ -127,7 +119,7 @@ const renderPosts = (state, elements, i18n) => {
     buttonEl.dataset.id = id;
     buttonEl.dataset.bsToggle = 'modal';
     buttonEl.dataset.bsTarget = '#modal';
-    buttonEl.textContent = i18n.t('posts.button');
+    buttonEl.textContent = i18n.t('button');
     liEl.append(buttonEl);
 
     ulEl.append(liEl);
@@ -136,15 +128,15 @@ const renderPosts = (state, elements, i18n) => {
 };
 
 const renderError = (error, elements, i18n) => {
-  elements.feedbackContainer.textContent = '';
+  elements.feedback.textContent = '';
   if (error) {
     elements.input.readOnly = false;
     elements.button.disabled = false;
     elements.button.innerHTML = '';
     elements.button.textContent = 'Добавить';
-    elements.feedbackContainer.classList.remove('text-success');
-    elements.feedbackContainer.classList.add('text-danger');
-    elements.feedbackContainer.textContent = i18n.t(error);
+    elements.feedback.classList.remove('text-success');
+    elements.feedback.classList.add('text-danger');
+    elements.feedback.textContent = i18n.t(error);
   }
 };
 
@@ -172,7 +164,7 @@ export default (state, elements, i18n) => onChange(state, (path, value) => {
       }
       elements.input.classList.remove('is-invalid');
       break;
-    case 'rssForm.state':
+    case 'rssForm.processState':
       renderStatus(value, elements, i18n);
       break;
     default:

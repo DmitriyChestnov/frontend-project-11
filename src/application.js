@@ -1,11 +1,11 @@
-import _ from 'lodash';
+import { differenceBy, uniqueId } from 'lodash';
 import i18next from 'i18next';
 import axios from 'axios';
 import * as yup from 'yup';
 
-import initView from './view.js';
+import watcher from './view.js';
 import ru from './locales/ru.js';
-import getFeedAndPosts from './parser.js';
+import parse from './parser.js';
 
 const addProxy = (url) => {
   const newUrl = new URL('https://allorigins.hexlet.app/get');
@@ -18,16 +18,15 @@ const addProxy = (url) => {
 const validateUrl = (url, urlsList, i18n) => {
   yup.setLocale({
     string: {
-      url: i18n.t('form.errors.notValidUrl'),
+      url: i18n.t('errors.notValidUrl'),
     },
     mixed: {
-      required: i18n.t('form.errors.required'),
-      notOneOf: i18n.t('form.errors.notUniqueUrl'),
+      required: i18n.t('errors.required'),
+      notOneOf: i18n.t('errors.notUniqueUrl'),
     },
   });
 
-  const schema = yup
-    .string()
+  const schema = yup.string()
     .required()
     .url()
     .notOneOf(urlsList);
@@ -35,21 +34,21 @@ const validateUrl = (url, urlsList, i18n) => {
   return schema.validate(url);
 };
 
-const updateTracker = (watchedState) => {
+const updatesTracker = (watchedState) => {
   const { feeds, posts } = watchedState;
   const promises = feeds.map(({ url, id }) => axios.get(addProxy(url))
     .then(({ data }) => {
-      const [, receivedPosts] = getFeedAndPosts(data.contents);
+      const [, receivedPosts] = parse(data.contents);
       const oldPosts = posts.filter((post) => post.feedId === id);
-      const addedPosts = _.differenceBy(receivedPosts, oldPosts, 'link');
+      const addedPosts = differenceBy(receivedPosts, oldPosts, 'link');
       if (addedPosts.length !== 0) {
-        const newPosts = addedPosts.map((post) => ({ ...post, id: _.uniqueId(), feedId: id }));
+        const newPosts = addedPosts.map((post) => ({ ...post, id: uniqueId(), feedId: id }));
         watchedState.posts = [...newPosts, ...posts];
       }
     })
     .catch(console.error));
   Promise.all(promises)
-    .finally(() => setTimeout(() => updateTracker(watchedState), 5000));
+    .finally(() => setTimeout(() => updatesTracker(watchedState), 5000));
 };
 
 export default () => {
@@ -57,21 +56,19 @@ export default () => {
     form: document.querySelector('form'),
     input: document.querySelector('#url-input'),
     button: document.querySelector('button[type="submit"]'),
-    feedbackContainer: document.querySelector('.feedback'),
-    postsContainer: document.querySelector('.posts'),
-    feedsContainer: document.querySelector('.feeds'),
+    feedback: document.querySelector('.feedback'),
+    posts: document.querySelector('.posts'),
+    feeds: document.querySelector('.feeds'),
     modal: {
       title: document.querySelector('.modal-title'),
       body: document.querySelector('.modal-body'),
       footer: document.querySelector('.modal-footer'),
     },
-    spanSpinner: document.createElement('span'),
-    spanLoading: document.createElement('span'),
   };
 
-  const initialState = {
+  const state = {
     rssForm: {
-      state: 'filling',
+      processState: 'filling',
       error: null,
       valid: true,
     },
@@ -92,42 +89,42 @@ export default () => {
     },
   });
 
-  const watchedState = initView(initialState, elements, i18n);
+  const watchedState = watcher(state, elements, i18n);
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
-    watchedState.rssForm.state = 'filling';
+    watchedState.rssForm.processState = 'filling';
     const formData = new FormData(e.target);
     const url = formData.get('url');
     const urlsList = watchedState.feeds.map((feed) => feed.url);
     validateUrl(url, urlsList, i18n)
       .then((validUrl) => {
         watchedState.rssForm.error = null;
-        watchedState.rssForm.state = 'processing';
+        watchedState.rssForm.processState = 'processing';
         return axios.get(addProxy(validUrl));
       })
       .then(({ data }) => {
-        const [feed, posts] = getFeedAndPosts(data.contents);
-        const newFeed = { ...feed, id: _.uniqueId(), url };
-        const newPosts = posts.map((post) => ({ ...post, id: _.uniqueId(), feedId: newFeed.id }));
+        const [feed, posts] = parse(data.contents);
+        const newFeed = { ...feed, id: uniqueId(), url };
+        const newPosts = posts.map((post) => ({ ...post, id: uniqueId(), feedId: newFeed.id }));
         watchedState.feeds = [newFeed, ...watchedState.feeds];
         watchedState.posts = [...newPosts, ...watchedState.posts];
-        watchedState.rssForm.state = 'success';
+        watchedState.rssForm.processState = 'success';
       })
       .catch((err) => {
         watchedState.rssForm.valid = err.name !== 'ValidationError';
         if (err.name === 'ValidationError') {
           watchedState.rssForm.error = err.message;
         } else if (err.NotValidRss) {
-          watchedState.rssForm.error = 'form.errors.notValidRss';
+          watchedState.rssForm.error = 'errors.notValidRss';
         } else if (axios.isAxiosError(err)) {
-          watchedState.rssForm.error = 'form.errors.networkProblems';
+          watchedState.rssForm.error = 'errors.network';
         }
-        watchedState.rssForm.state = 'filling';
+        watchedState.rssForm.processState = 'filling';
       });
   });
 
-  elements.postsContainer.addEventListener('click', ({ target }) => {
+  elements.posts.addEventListener('click', ({ target }) => {
     if (target.closest('a')) {
       const { id } = target.dataset;
       watchedState.uiState.visitedPosts.add(id);
@@ -139,5 +136,5 @@ export default () => {
     }
   });
 
-  setTimeout(() => updateTracker(watchedState), 5000);
+  setTimeout(() => updatesTracker(watchedState), 5000);
 };
