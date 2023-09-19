@@ -35,7 +35,7 @@ const validateUrl = (url, urlsList, i18n) => {
   return schema.validate(url);
 };
 
-const updatePosts = (watchedState) => {
+const updateTracker = (watchedState) => {
   const { feeds, posts } = watchedState;
   const promises = feeds.map(({ url, id }) => axios.get(addProxy(url))
     .then(({ data }) => {
@@ -49,7 +49,7 @@ const updatePosts = (watchedState) => {
     })
     .catch(console.error));
   Promise.all(promises)
-    .finally(() => setTimeout(() => updatePosts(watchedState), 5000));
+    .finally(() => setTimeout(() => updateTracker(watchedState), 5000));
 };
 
 export default () => {
@@ -139,5 +139,5 @@ export default () => {
     }
   });
 
-  setTimeout(() => updatePosts(watchedState), 5000);
+  setTimeout(() => updateTracker(watchedState), 5000);
 };
