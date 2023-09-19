@@ -1,7 +1,5 @@
 const path = require('path');
-// Плагины - внешние модули для Webpack, которые позволяют управлять и обрабатывать файлы,
-// которые не импортируются в JavaScript
- const HtmlWebpackPlugin = require('html-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
