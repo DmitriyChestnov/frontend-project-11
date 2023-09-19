@@ -1,12 +1,12 @@
 import onChange from 'on-change';
 
-const renderStatus = (processState, elements, i18n) => {
+const handleProcessState = (processState, elements, i18n) => {
   switch (processState) {
     case 'filling':
       elements.input.readOnly = false;
       elements.button.disabled = false;
       break;
-    case 'processing':
+    case 'loading':
       elements.input.readOnly = true;
       elements.button.disabled = true;
       break;
@@ -26,24 +26,22 @@ const renderStatus = (processState, elements, i18n) => {
   }
 };
 
-const renderModal = (elements, posts, modalWindowId) => {
-  console.log(posts);
+const handleModal = (elements, posts, modalWindowId) => {
   const post = posts.find(({ id }) => modalWindowId === id.toString());
-  const { modal } = elements;
 
-  modal.title.textContent = post.title;
-  modal.body.textContent = post.description;
-  modal.footer.firstElementChild.href = post.link;
+  elements.modal.title.textContent = post.title;
+  elements.modal.body.textContent = post.description;
+  elements.modal.footer.firstElementChild.href = post.link;
 };
 
-const renderVisitedLinks = (setID) => {
+const handleVisitedLinks = (setID) => {
   const currentVisitedID = [...setID.values()][setID.size - 1];
   const currentLink = document.querySelector(`[data-id="${currentVisitedID}"]`);
   currentLink.classList.toggle('fw-bold');
   currentLink.classList.toggle('fw-normal');
 };
 
-const renderFeeds = (state, elements, i18n) => {
+const handleFeeds = (state, elements, i18n) => {
   elements.feeds.innerHTML = '';
 
   const divEl = document.createElement('div');
@@ -82,7 +80,7 @@ const renderFeeds = (state, elements, i18n) => {
   divEl.append(ulEl);
 };
 
-const renderPosts = (state, elements, i18n) => {
+const handlePosts = (state, elements, i18n) => {
   elements.posts.innerHTML = '';
   const divEl = document.createElement('div');
   divEl.classList.add('card', 'border-0');
@@ -127,7 +125,7 @@ const renderPosts = (state, elements, i18n) => {
   divEl.append(ulEl);
 };
 
-const renderError = (error, elements, i18n) => {
+const handleError = (error, elements, i18n) => {
   elements.feedback.textContent = '';
   if (error) {
     elements.input.readOnly = false;
@@ -143,29 +141,29 @@ const renderError = (error, elements, i18n) => {
 export default (state, elements, i18n) => onChange(state, (path, value) => {
   switch (path) {
     case 'uiState.modalId':
-      renderModal(elements, state.posts, value);
+      handleModal(elements, state.posts, value);
       break;
     case 'uiState.visitedPosts':
-      renderVisitedLinks(value, state.posts);
+      handleVisitedLinks(value, state.posts);
       break;
     case 'feeds':
-      renderFeeds(state, elements, i18n);
+      handleFeeds(state, elements, i18n);
       break;
     case 'posts':
-      renderPosts(state, elements, i18n);
+      handlePosts(state, elements, i18n);
       break;
-    case 'rssForm.error':
-      renderError(value, elements, i18n);
+    case 'error':
+      handleError(value, elements, i18n);
       break;
-    case 'rssForm.valid':
+    case 'processState':
+      handleProcessState(value, elements, i18n);
+      break;
+    case 'valid':
       if (!value) {
         elements.input.classList.add('is-invalid');
         return;
       }
       elements.input.classList.remove('is-invalid');
-      break;
-    case 'rssForm.processState':
-      renderStatus(value, elements, i18n);
       break;
     default:
       throw new Error(`Unknown path: ${path}`);

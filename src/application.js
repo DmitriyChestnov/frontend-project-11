@@ -67,13 +67,11 @@ export default () => {
   };
 
   const state = {
-    rssForm: {
-      processState: 'filling',
-      error: null,
-      valid: true,
-    },
+    processState: 'filling',
     feeds: [],
     posts: [],
+    valid: true,
+    error: null,
     uiState: {
       visitedPosts: new Set(),
       modalId: null,
@@ -93,14 +91,14 @@ export default () => {
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
-    watchedState.rssForm.processState = 'filling';
+    watchedState.processState = 'filling';
     const formData = new FormData(e.target);
     const url = formData.get('url');
     const urlsList = watchedState.feeds.map((feed) => feed.url);
     validateUrl(url, urlsList, i18n)
       .then((validUrl) => {
-        watchedState.rssForm.error = null;
-        watchedState.rssForm.processState = 'processing';
+        watchedState.error = null;
+        watchedState.processState = 'loading';
         return axios.get(addProxy(validUrl));
       })
       .then(({ data }) => {
@@ -109,30 +107,30 @@ export default () => {
         const newPosts = posts.map((post) => ({ ...post, id: uniqueId(), feedId: newFeed.id }));
         watchedState.feeds = [newFeed, ...watchedState.feeds];
         watchedState.posts = [...newPosts, ...watchedState.posts];
-        watchedState.rssForm.processState = 'success';
+        watchedState.processState = 'success';
       })
       .catch((err) => {
-        watchedState.rssForm.valid = err.name !== 'ValidationError';
+        watchedState.valid = err.name !== 'ValidationError';
         if (err.name === 'ValidationError') {
-          watchedState.rssForm.error = err.message;
+          watchedState.error = err.message;
         } else if (err.NotValidRss) {
-          watchedState.rssForm.error = 'errors.notValidRss';
+          watchedState.error = 'errors.notValidRss';
         } else if (axios.isAxiosError(err)) {
-          watchedState.rssForm.error = 'errors.network';
+          watchedState.error = 'errors.network';
         }
-        watchedState.rssForm.processState = 'filling';
+        watchedState.processState = 'filling';
       });
   });
 
-  elements.posts.addEventListener('click', ({ target }) => {
-    if (target.closest('a')) {
-      const { id } = target.dataset;
-      watchedState.uiState.visitedPosts.add(id);
-    }
-    if (target.closest('button')) {
-      const { id } = target.dataset;
+  elements.posts.addEventListener('click', (e) => {
+    if (e.target.closest('button')) {
+      const { id } = e.target.dataset;
       watchedState.uiState.visitedPosts.add(id);
       watchedState.uiState.modalId = id;
+    }
+    if (e.target.closest('a')) {
+      const { id } = e.target.dataset;
+      watchedState.uiState.visitedPosts.add(id);
     }
   });
 
