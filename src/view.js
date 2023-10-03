@@ -37,8 +37,8 @@ const handleModal = (elements, posts, modalWindowId) => {
 const handleVisitedLinks = (setID) => {
   const currentVisitedID = [...setID.values()][setID.size - 1];
   const currentLink = document.querySelector(`[data-id="${currentVisitedID}"]`);
-  currentLink.classList.toggle('fw-bold');
-  currentLink.classList.toggle('fw-normal');
+  currentLink.classList.replace('fw-bold', 'fw-normal');
+  currentLink.classList.add('link-secondary');
 };
 
 const handleFeeds = (state, elements, i18n) => {
