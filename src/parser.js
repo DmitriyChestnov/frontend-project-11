@@ -2,10 +2,7 @@ export default (data) => {
   const doc = new DOMParser().parseFromString(data, 'application/xml');
   const parseError = doc.querySelector('parsererror');
   if (parseError) {
-    const textError = parseError.textContent;
-    const error = new Error(textError);
-    error.NotValidRss = true;
-    throw error;
+    throw new Error('notValidRss');
   }
 
   const feed = {

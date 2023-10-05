@@ -134,6 +134,15 @@ const handleError = (error, elements, i18n) => {
     elements.button.textContent = 'Добавить';
     elements.feedback.classList.remove('text-success');
     elements.feedback.classList.add('text-danger');
+
+    if (error === 'notValidRss') {
+      elements.feedback.textContent = i18n.t('errors.notValidRss');
+      return;
+    }
+    if (error === 'Network Error') {
+      elements.feedback.textContent = i18n.t('errors.network');
+      return;
+    }
     elements.feedback.textContent = i18n.t(error);
   }
 };
