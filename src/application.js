@@ -7,6 +7,8 @@ import watcher from './view.js';
 import ru from './locales/ru.js';
 import parse from './parser.js';
 
+const timeout = 5000;
+
 const addProxy = (url) => {
   const newUrl = new URL('https://allorigins.hexlet.app/get');
   const searchUrl = encodeURI(url);
@@ -34,6 +36,11 @@ const validateUrl = (url, urlsList, i18n) => {
   return schema.validate(url);
 };
 
+const createPosts = (watchedState, addedPosts, id) => {
+  const newPosts = addedPosts.map((post) => ({ ...post, id: uniqueId(), feedId: id }));
+  watchedState.posts = [...newPosts, ...watchedState.posts];
+};
+
 const updatesTracker = (watchedState) => {
   const { feeds, posts } = watchedState;
   const promises = feeds.map(({ url, id }) => axios.get(addProxy(url))
@@ -42,13 +49,12 @@ const updatesTracker = (watchedState) => {
       const oldPosts = posts.filter((post) => post.feedId === id);
       const addedPosts = differenceBy(receivedPosts, oldPosts, 'link');
       if (addedPosts.length !== 0) {
-        const newPosts = addedPosts.map((post) => ({ ...post, id: uniqueId(), feedId: id }));
-        watchedState.posts = [...newPosts, ...posts];
+        createPosts(watchedState, addedPosts, id);
       }
     })
     .catch(console.error));
   Promise.all(promises)
-    .finally(() => setTimeout(() => updatesTracker(watchedState), 5000));
+    .finally(() => setTimeout(() => updatesTracker(watchedState), timeout));
 };
 
 export default () => {
@@ -88,6 +94,7 @@ export default () => {
   });
 
   const watchedState = watcher(state, elements, i18n);
+  updatesTracker(watchedState);
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -110,14 +117,8 @@ export default () => {
         watchedState.processState = 'success';
       })
       .catch((err) => {
-        watchedState.valid = err.name !== 'ValidationError';
-        if (err.name === 'ValidationError') {
-          watchedState.error = err.message;
-        } else if (err.NotValidRss) {
-          watchedState.error = 'errors.notValidRss';
-        } else if (axios.isAxiosError(err)) {
-          watchedState.error = 'errors.network';
-        }
+        watchedState.valid = false;
+        watchedState.error = err.message ?? 'defaultError';
         watchedState.processState = 'filling';
       });
   });
@@ -133,6 +134,4 @@ export default () => {
       watchedState.uiState.visitedPosts.add(id);
     }
   });
-
-  setTimeout(() => updatesTracker(watchedState), 5000);
 };
