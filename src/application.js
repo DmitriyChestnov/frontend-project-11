@@ -29,6 +29,7 @@ const validateUrl = (url, urlsList, i18n) => {
   });
 
   const schema = yup.string()
+    .trim()
     .required()
     .url()
     .notOneOf(urlsList);
